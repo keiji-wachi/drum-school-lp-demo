@@ -39,23 +39,15 @@ document.addEventListener(
         }
 
 
-        const form =
-            formContainer.querySelector(
-                ".wpcf7-form"
-            );
+const form =
+    formContainer.querySelector(
+        "form"
+    );
 
 
         if (!form) {
             return;
         }
-
-
-        /*
-         * CF7がイベントを発火する
-         * .wpcf7要素。
-         */
-        const cf7Root =
-            form.closest(".wpcf7");
 
 
         /* ==================================================
@@ -799,208 +791,128 @@ document.addEventListener(
         );
 
 
-        /* ==================================================
-           Final Submit
-        ================================================== */
+/* ==================================================
+   Demo Submit
+================================================== */
 
-        form.addEventListener(
-            "submit",
-            (event) => {
+form.addEventListener(
+    "submit",
+    (event) => {
 
-                /* 二重送信防止 */
-
-                if (isSubmitting) {
-
-                    event.preventDefault();
-
-                    event.stopImmediatePropagation();
-
-                    return;
-                }
+        /*
+         * 静的デモ版では
+         * 実際の送信は行わない。
+         */
+        event.preventDefault();
 
 
-                /* STEP5以外から送信不可 */
-
-                if (
-                    currentStep
-                    !==
-                    steps.length - 1
-                ) {
-
-                    event.preventDefault();
-
-                    event.stopImmediatePropagation();
-
-                    return;
-                }
+        if (isSubmitting) {
+            return;
+        }
 
 
-                /* STEP5チェック */
-
-                if (
-                    !validateCurrentStep()
-                ) {
-
-                    event.preventDefault();
-
-                    event.stopImmediatePropagation();
-
-
-                    scrollToError(
-                        steps[currentStep]
-                    );
+        /*
+         * STEP5以外からは送信しない。
+         */
+        if (
+            currentStep
+            !==
+            steps.length - 1
+        ) {
+            return;
+        }
 
 
-                    return;
-                }
+        /*
+         * STEP5入力チェック。
+         */
+        if (
+            !validateCurrentStep()
+        ) {
+
+            scrollToError(
+                steps[currentStep]
+            );
 
 
-                startSubmitting();
+            return;
+        }
 
-            },
-            true
+
+        isSubmitting =
+            true;
+
+
+        if (submitButton) {
+
+            submitButton.disabled =
+                true;
+
+
+            submitButton.value =
+                "デモ送信完了";
+
+        }
+
+
+        /*
+         * 既存の完了メッセージがあれば削除。
+         */
+        const existingMessage =
+            form.querySelector(
+                ".js-demo-submit-message"
+            );
+
+
+        if (existingMessage) {
+
+            existingMessage.remove();
+
+        }
+
+
+        /*
+         * デモ完了メッセージ。
+         */
+        const message =
+            document.createElement(
+                "div"
+            );
+
+
+        message.className =
+            "contact-demo-message js-demo-submit-message";
+
+
+        message.setAttribute(
+            "role",
+            "status"
         );
 
 
-        /* ==================================================
-           CF7 Events
-        ================================================== */
-
-        if (cf7Root) {
-
-            /* ==============================================
-               Validation Error
-            ============================================== */
-
-            cf7Root.addEventListener(
-                "wpcf7invalid",
-                () => {
-
-                    resetSubmitting();
+        message.innerHTML = `
+            <strong>
+                デモフォームの操作確認が完了しました。
+            </strong>
+            <span>
+                ポートフォリオ公開版のため、
+                入力内容は送信されません。
+            </span>
+        `;
 
 
-                    const invalidField =
-                        form.querySelector(
-                            ".wpcf7-not-valid"
-                        );
+        form.appendChild(
+            message
+        );
 
 
-                    if (!invalidField) {
-                        return;
-                    }
+        message.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+        });
 
-
-                    const invalidStep =
-                        invalidField.closest(
-                            ".js-form-step"
-                        );
-
-
-                    if (!invalidStep) {
-                        return;
-                    }
-
-
-                    const index =
-                        steps.indexOf(
-                            invalidStep
-                        );
-
-
-                    if (index === -1) {
-                        return;
-                    }
-
-
-                    currentStep =
-                        index;
-
-
-                    renderStep();
-
-
-                    formContainer
-                        .scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                        });
-
-                }
-            );
-
-
-            /* ==============================================
-               Spam
-            ============================================== */
-
-            cf7Root.addEventListener(
-                "wpcf7spam",
-                () => {
-
-                    resetSubmitting();
-
-                }
-            );
-
-
-            /* ==============================================
-               Mail Failed
-            ============================================== */
-
-            cf7Root.addEventListener(
-                "wpcf7mailfailed",
-                () => {
-
-                    resetSubmitting();
-
-                }
-            );
-
-
-            /* ==============================================
-               Mail Sent
-            ============================================== */
-
-            cf7Root.addEventListener(
-                "wpcf7mailsent",
-                () => {
-
-                    /*
-                     * ここまで来た場合のみ、
-                     *
-                     * ・CF7バリデーションOK
-                     * ・PHPバリデーションOK
-                     * ・Turnstile OK
-                     * ・メール送信OK
-                     *
-                     * という状態。
-                     */
-                    finishSubmitting();
-
-
-                    /*
-                     * WordPress側から渡された
-                     * サンクスページURLへ遷移する。
-                     */
-                    if (
-                        typeof drumSchoolFormConfig
-                        !==
-                        "undefined"
-                        &&
-                        drumSchoolFormConfig
-                            .thanksUrl
-                    ) {
-
-                        window.location.href =
-                            drumSchoolFormConfig
-                                .thanksUrl;
-
-                    }
-
-                }
-            );
-
-        }
+    }
+);
 
 
         /* ==================================================
